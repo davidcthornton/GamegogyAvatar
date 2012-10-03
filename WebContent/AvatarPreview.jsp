@@ -23,7 +23,7 @@
 		<title>Avatar Creator</title>
 		
         <% 
-        	int currentUser = 1; // dave, this needs to be fixed!
+        	String currentUser = "1"; // dave, this needs to be fixed!
 			Connection connection = null;
 			ResultSet rs, rs2, rs3;
 			CachedRowSet cachedRowSet=new CachedRowSetImpl();
@@ -50,15 +50,37 @@
 			User sessionUser = ctx.getUser();
 			Id courseID = ctx.getCourseId();		
 			String sessionUserRole = ctx.getCourseMembership().getRoleAsString();	
-			String sessionUserID = sessionUser.getId().toString();	
+			String currentUsername = sessionUser.getUserName();	
 			
 			// now, if this user doesn't exist in the database, add him
-			/*
-			rs = stmt.executeQuery("SELECT count(*) FROM users where userid=" + sessionUserID);			
-			while (cachedRowSet.next()) {				
-				String makeCategoryTab = "<li class=\"noselect\"><a href=\"#" + cachedRowSet.getString("name") + "\">" + cachedRowSet.getString("name") + "</a></li>";
-				out.print(makeCategoryTab);
-			}*/
+			rs = stmt.executeQuery("SELECT count(*) FROM users where username='" + currentUsername + "'");
+			rs.next();		
+			if (rs.getString(1).equals("0")) {  // this is a new user, so add them to the database
+				out.print("Greetings, " + currentUsername + "!  Please customize your avatar.");
+				stmt.executeUpdate("insert into users (username, poseID) values ('" + currentUsername + "', 3)");
+				// now, which ID was just added by the autoincrementer?
+				rs = stmt.executeQuery("SELECT userID FROM users where username='" + currentUsername + "'");
+				rs.next();
+				currentUser = rs.getString(1);
+				stmt.executeUpdate("insert into equipped (itemID, userID) values (1, " + currentUser + ")");
+				stmt.executeUpdate("insert into equipped (itemID, userID) values (11, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (2, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (3, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (4, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (5, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (6, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (7, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (8, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (9, " + currentUser + ")");
+				stmt.executeUpdate("insert into inventory (itemID, userID) values (10, " + currentUser + ")");				
+			} // end of adding new user to database	
+			else {  // user is already in the database, so get their ID
+				rs = stmt.executeQuery("SELECT userID FROM users where username='" + currentUsername + "'");
+				rs.next();
+				currentUser = rs.getString(1);
+				out.print("Welcome back, " + currentUsername);
+			}
+			
 			
 			// dimensions for the avatar canvas
             int height = 450;
@@ -70,6 +92,8 @@
 		<link rel="stylesheet" type="text/css" href="<%=styleSheetURL%>" />
 		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
 		<script type="text/javascript">
+			jQueryAlias = $.noConflict();  //to avoid this webapp conflicting with others on the page        
+				
 			// Check to see whether the browser is compatible with AJAX.
 			var req;
 
@@ -90,14 +114,14 @@
 			}
 			
 			//Set up tab functionality for inventory
-			$(function() {
-				var tabContainers = $('div.tabs > div');
+			jQueryAlias(function() {
+				var tabContainers = jQueryAlias('div.tabs > div');
 		
-				$('div.tabs ul.tabNavigation a').click(function () {
+				jQueryAlias('div.tabs ul.tabNavigation a').click(function () {
 					tabContainers.hide();
 					tabContainers.filter(this.hash).show();
-					$('div.tabs ul.tabNavigation a').removeClass('selected');
-					$(this).addClass('selected');
+					jQueryAlias('div.tabs ul.tabNavigation a').removeClass('selected');
+					jQueryAlias(this).addClass('selected');
 					return false;
 				}).filter(':first').click();
 			});
@@ -134,7 +158,8 @@
 			
 			<%
 				String imagesFolderURL = PlugInUtil.getUri("dt", "avatarblock", "images/");
-			%>			
+			%>	
+			/*
 			function drawImage(imgurl) {
 				var imagesToDraw = new Array();
 				// This function draws an image to the canvas.
@@ -165,6 +190,33 @@
 						context.drawImage(imagesToDraw[i], 0, 0, canvas.width, canvas.height);
 					}
 				})				
+			} // end of drawImage
+			*/
+			
+			function drawImage(imgurl) {
+				// This function draws an image to the canvas.
+				var canvas = document.getElementById("avatarCanvas");
+				var context = canvas.getContext("2d");
+				var tempImg = new Image();
+				// Check to see whether the image is the last or only one to be drawn by looking for spaces in imgurl.
+				if (/\s/g.test(imgurl)) {
+					//This is not the last image. Call the function again to draw the next one.
+					thisurl = imgurl.split(" ",1)[0];
+					imgurl = imgurl.split(/[" "](.+)?/)[1];
+					
+					tempImg.src = "<%=imagesFolderURL%>" + thisurl;
+					tempImg.onload = function() {
+						context.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+						drawImage(imgurl);
+					}
+				}
+				else {
+					//This is the last image.
+                    tempImg.src = "<%=imagesFolderURL%>" + thisurl;
+					tempImg.onload = function() {
+						context.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+					}
+				}
 			} // end of drawImage
 				
 			function clearCanvas() {
@@ -371,7 +423,7 @@
 
 								}
 								//End check and make button.
-								makeButton = "<button title=\"" + rs.getString("name") + "\" class=\"icon\" onClick=\"clickItem('" + rs.getString("itemID") + "', '" + currentUser + "')\" onmouseover=\"showDropList('" + rs.getString("itemID") + "')\"><img src=\"" + imagesFolderURL + rs.getString("thumbnail") + "\" /></button><ul id='dropList" + rs.getString("itemID") + "' class='dropListClass' >" + tempList + "</ul>  <script>$(\"#dropList" + rs.getString("itemID") + "\").mouseleave(function(){hideDropList('" + rs.getString("itemID") + "')})</script>";
+								makeButton = "<button title=\"" + rs.getString("name") + "\" class=\"icon\" onClick=\"clickItem('" + rs.getString("itemID") + "', '" + currentUser + "')\" onmouseover=\"showDropList('" + rs.getString("itemID") + "')\"><img src=\"" + imagesFolderURL + rs.getString("thumbnail") + "\" /></button><ul id='dropList" + rs.getString("itemID") + "' class='dropListClass' >" + tempList + "</ul>  <script>jQueryAlias(\"#dropList" + rs.getString("itemID") + "\").mouseleave(function(){hideDropList('" + rs.getString("itemID") + "')})</script>";
 							}
 							else {
 								makeButton = "<button title=\"" + rs.getString("name") + "\" class=\"icon\" onClick=\"clickItem('" + rs.getString("itemID") + "', '" + currentUser + "')\"><img src=\"" + imagesFolderURL + rs.getString("thumbnail") + "\" /></button>";
@@ -405,7 +457,7 @@
 	
 		<div id="ajax_div">
 		</div>
-		<script type="text/javascript">  UpdatingAvatar("1"); </script>
+		<script type="text/javascript">  UpdatingAvatar("<%=currentUser%>"); </script>
 	</body>
 </html>
 </bbData:context>
