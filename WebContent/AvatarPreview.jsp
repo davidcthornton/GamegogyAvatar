@@ -28,7 +28,7 @@
 			ResultSet rs, rs2, rs3;
 			CachedRowSet cachedRowSet=new CachedRowSetImpl();
 			Statement stmt, stmt2, stmt3;
-               
+			   
 			try {
 				String connectionURL = "jdbc:mysql://127.0.0.1:3306/avatardatabase"; 
 				Class.forName("com.mysql.jdbc.Driver").newInstance();
@@ -41,11 +41,28 @@
 			catch(Exception ex){
 				out.println("Unable to connect to database, because: " + ex.toString());
 			}
-            int height = 450;
-            int width = 300;
+			// dave, need to shrink this if possible
 			stmt = connection.createStatement();
 			stmt2 = connection.createStatement();
 			stmt3 = connection.createStatement();	
+						
+			// get the current user
+			User sessionUser = ctx.getUser();
+			Id courseID = ctx.getCourseId();		
+			String sessionUserRole = ctx.getCourseMembership().getRoleAsString();	
+			String sessionUserID = sessionUser.getId().toString();	
+			
+			// now, if this user doesn't exist in the database, add him
+			/*
+			rs = stmt.executeQuery("SELECT count(*) FROM users where userid=" + sessionUserID);			
+			while (cachedRowSet.next()) {				
+				String makeCategoryTab = "<li class=\"noselect\"><a href=\"#" + cachedRowSet.getString("name") + "\">" + cachedRowSet.getString("name") + "</a></li>";
+				out.print(makeCategoryTab);
+			}*/
+			
+			// dimensions for the avatar canvas
+            int height = 450;
+            int width = 300;
 			
 			String styleSheetURL = PlugInUtil.getUri("dt", "avatarblock", "style.css");
 		%>
@@ -85,35 +102,69 @@
 				}).filter(':first').click();
 			});
 	        
+			
+			function preloadImages(arr){
+				var newimages=[], loadedimages=0
+				var postaction=function(){}
+				var arr=(typeof arr!="object")? [arr] : arr
+				function imageloadpost(){
+					loadedimages++
+					if (loadedimages==arr.length){
+						postaction(newimages) //call postaction and pass in newimages array as parameter
+					}
+				}
+				for (var i=0; i<arr.length; i++){
+					newimages[i]=new Image()
+					newimages[i].src=arr[i]
+					newimages[i].onload=function(){
+						imageloadpost()
+					}
+					newimages[i].onerror=function(){
+						imageloadpost()
+					}
+				}
+				return { //return blank object with done() method
+					done:function(f){
+						postaction=f || postaction //remember user defined callback functions to be called when images load
+					}
+				}
+			} // end of preloadImages			
+			
+			
+			
 			<%
 				String imagesFolderURL = PlugInUtil.getUri("dt", "avatarblock", "images/");
 			%>			
 			function drawImage(imgurl) {
-				//alert("draw image");
+				var imagesToDraw = new Array();
 				// This function draws an image to the canvas.
 				var canvas = document.getElementById("avatarCanvas");
 				var context = canvas.getContext("2d");
-				var tempImg = new Image();
-				// Check to see whether the image is the last or only one to be drawn by looking for spaces in imgurl.
-				if (/\s/g.test(imgurl)) {
-					//This is not the last image. Call the function again to draw the next one.
+				var tempImg;
+				var numLoadedImages = 0;				
+				// check to see whether the image is the last or only one to be drawn by looking for spaces in imgurl.
+				while (/\s/g.test(imgurl)) {
+					tempImg = new Image();
+					// this is not the last image
 					thisurl = imgurl.split(" ",1)[0];
-					imgurl = imgurl.split(/[" "](.+)?/)[1];
-					
+					imgurl = imgurl.split(/[" "](.+)?/)[1];					
 					tempImg.src = "<%=imagesFolderURL%>" + thisurl;
-					//alert("<" + tempImg.src + ">");					
-					tempImg.onload = function() {
-						context.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
-						drawImage(imgurl);
+					imagesToDraw.push(tempImg);	
+					
+					tempImg.onload = function() {					
+						numLoadedImages++;
+					}					
+				}				
+				// out of loop, this is the last image
+				tempImg = new Image();
+				tempImg.src = "<%=imagesFolderURL%>" + thisurl;			
+				imagesToDraw.push(tempImg);
+				// make sure everything is loaded, then draw
+				preloadImages(imagesToDraw).done(function(images){
+					for(var i=0; i<imagesToDraw.length; i++) {
+						context.drawImage(imagesToDraw[i], 0, 0, canvas.width, canvas.height);
 					}
-				}
-				else {
-					//This is the last image.
-                    tempImg.src = "<%=imagesFolderURL%>" + thisurl;
-					tempImg.onload = function() {
-						context.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
-					}
-				}
+				})				
 			} // end of drawImage
 				
 			function clearCanvas() {
@@ -338,7 +389,10 @@
 		<div class="posesDiv" id="posesList">
 			<%
 				// Creates buttons for all avatar pose options.
-				rs = stmt.executeQuery("SELECT * FROM poses");
+				
+				// dave, just temporarily limiting the poses as an experiment
+				rs = stmt.executeQuery("SELECT * FROM poses where poseID in (3, 4, 6, 7, 8)");
+				//rs = stmt.executeQuery("SELECT * FROM poses");
 				
 				String poseScript = "";
 				int i = 0;
