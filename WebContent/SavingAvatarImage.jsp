@@ -3,21 +3,9 @@
 <%@page import="java.util.*"%>
 <%@page import="sun.misc.BASE64Decoder"%>
 
-<%	
-	Connection connection = null;	
+<%@include file="ConnectToDatabase.jsp" %>
+<%			
 	Statement updateStatement;	
-	try {
-		String connectionURL = "jdbc:mysql://127.0.0.1:3306/avatardatabase"; 
-		Class.forName("com.mysql.jdbc.Driver").newInstance();		
-		connection = DriverManager.getConnection(connectionURL, "root", "Blackboard789");	 
-		if(!connection.isClosed()) { 
-			//out.println("SavingAvatarImage: successfully connected to MySQL server");
-		}			
-	} 
-	catch(Exception ex){
-		out.println("Unable to connect to database, because: " + ex.toString());
-	}  
-	
 	String currentUser = request.getParameter("whichUser");
     String encodedImage = request.getParameter("whichImage");
 	

@@ -43,6 +43,7 @@
 			<permission type="java.net.SocketPermission" name="....-" actions="connect,resolve"/>
 			<permission type="runtime" name="db.connection" actions=""/>			
 			<permission type="socket" name="127.0.0.1:3306" actions="connect,resolve"/>
+			<permission type="socket" name="205.174.62.96:3306" actions="connect,resolve"/>
 			
 		</permissions>
 	</plugin>

@@ -1,25 +1,14 @@
 <%@ page import="java.sql.*" %> 
 <%@ page import="java.io.*" %> 
 <%@page import="java.util.*"%>
-					
+	
+<%@include file="ConnectToDatabase.jsp" %>					
 <% 	
-	Connection connection = null;
+	
 	ResultSet rs, allEquippedSet, dataInventory;
 	Statement stmt, stmt2, updateStatement;
 	String sendBack = "";
 	
-	try {
-		String connectionURL = "jdbc:mysql://127.0.0.1:3306/avatardatabase"; 
-		Class.forName("com.mysql.jdbc.Driver").newInstance();		
-		connection = DriverManager.getConnection(connectionURL, "root", "Blackboard789");	 
-		if(!connection.isClosed()) { 
-			//out.println("UpdatingAvatar: successfully connected to " + "MySQL server using TCP/IP...");
-		}
-				
-	} //end of trying to connect to database
-	catch(Exception ex){
-		out.println("Unable to connect to database, because: " + ex.toString());
-	}
 	stmt = connection.createStatement();
 	stmt2 = connection.createStatement();
 	updateStatement = connection.createStatement();

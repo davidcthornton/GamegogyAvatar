@@ -1,46 +1,43 @@
-<%@ page import="java.sql.*" %> 
-<%@ page import="java.io.*" %> 
-<%@page import="java.util.*"%> 						
-<%@page import="javax.sql.rowset.CachedRowSet"%> 			
+<%@ page import="java.sql.*"%>
+<%@ page import="java.io.*"%>
+<%@page import="java.util.*"%>
+<%@page import="javax.sql.rowset.CachedRowSet"%>
 <%@page import="com.sun.rowset.CachedRowSetImpl"%>
 
 <%@page import="blackboard.base.*"%>
-<%@page import="blackboard.data.course.*"%> 				<!-- for reading data -->
-<%@page import="blackboard.data.user.*"%> 					<!-- for reading data -->
-<%@page import="blackboard.persist.*"%> 					<!-- for writing data -->
-<%@page import="blackboard.persist.course.*"%> 				<!-- for writing data -->
+<%@page import="blackboard.data.course.*"%>
+<!-- for reading data -->
+<%@page import="blackboard.data.user.*"%>
+<!-- for reading data -->
+<%@page import="blackboard.persist.*"%>
+<!-- for writing data -->
+<%@page import="blackboard.persist.course.*"%>
+<!-- for writing data -->
 <%@page import="blackboard.platform.gradebook2.*"%>
 <%@page import="blackboard.platform.gradebook2.impl.*"%>
-<%@page import="java.util.*"%> 								<!-- for utilities -->
-<%@page import="blackboard.platform.plugin.PlugInUtil"%>	<!-- for utilities -->
-<%@ taglib uri="/bbData" prefix="bbData"%> 					<!-- for tags -->
-<bbData:context id="ctx">  <!-- to allow access to the session variables -->
+<%@page import="java.util.*"%>
+<!-- for utilities -->
+<%@page import="blackboard.platform.plugin.PlugInUtil"%>
+<!-- for utilities -->
+<%@ taglib uri="/bbData" prefix="bbData"%>
+<!-- for tags -->
+<bbData:context id="ctx">
+	<!-- to allow access to the session variables -->
 
-<!DOCTYPE HTML>
+	<!DOCTYPE HTML>
 	<html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>Avatar Creator</title>
-		
-        <% 
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Avatar Creator</title>
+<%@include file="ConnectToDatabase.jsp"%>
+
+<% 
         	String currentUser = "1"; // dave, this needs to be fixed!
-			Connection connection = null;
+        	
 			ResultSet rs, rs2, rs3;
 			CachedRowSet cachedRowSet=new CachedRowSetImpl();
 			Statement stmt, stmt2, stmt3;
-			   
-			try {
-				String connectionURL = "jdbc:mysql://127.0.0.1:3306/avatardatabase"; 
-				Class.forName("com.mysql.jdbc.Driver").newInstance();
-				connection = DriverManager.getConnection(connectionURL, "root", "Blackboard789");	 
-                   
-				if(!connection.isClosed()) { 
-					//out.println("Successfully connected to MySQL server");							
-				}                   		
-			} 
-			catch(Exception ex){
-				out.println("Unable to connect to database, because: " + ex.toString());
-			}
+			
 			// dave, need to shrink this if possible
 			stmt = connection.createStatement();
 			stmt2 = connection.createStatement();
@@ -88,12 +85,12 @@
 			
 			String styleSheetURL = PlugInUtil.getUri("dt", "avatarblock", "style.css");
 		%>
-		
-		<link rel="stylesheet" type="text/css" href="<%=styleSheetURL%>" />
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
-		<script type="text/javascript">
-			jQueryAlias = $.noConflict();  //to avoid this webapp conflicting with others on the page        
-				
+
+<link rel="stylesheet" type="text/css" href="<%=styleSheetURL%>" />
+<script type="text/javascript"
+	src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script type="text/javascript">			        
+			jQueryAlias = $.noConflict();  //to avoid this webapp conflicting with others on the page				
 			// Check to see whether the browser is compatible with AJAX.
 			var req;
 
@@ -355,32 +352,34 @@
 					document.getElementById("changeMessage").innerHTML="An error occurred; the new avatar was not saved.";
 				}*/				
 			} // end of SaveAvatarImage
-		</script>					
-			
-	<%                    
+			//jQueryAlias.noConflict();  //to avoid this webapp conflicting with others on the page
+		</script>
+
+<%                    
 		int poseIndex = 0;
 		String makeButton = "";
-	%>			
-	</head>
-	<body>
+	%>
+</head>
+<body>
 	<div id="CanvasDiv">
-		<canvas id="avatarCanvas" name="avatarCanvas" width="<%=width%>px" height="<%=height%>px" ></canvas>
+		<canvas id="avatarCanvas" name="avatarCanvas" width="<%=width%>px"
+			height="<%=height%>px"></canvas>
 	</div>
 	<div class="messageDiv">
 		<p id="changeMessage"></p>
 	</div>
-		
 
-		<div class="saveDiv">
-			<%
+
+	<div class="saveDiv">
+		<%
 				// Creates a button for calling the SaveAvatarImage function.
 				out.print("<button title=\"Save Avatar\" class=\"saveClick\" onClick=\"SaveAvatarImage('" + currentUser + "');\" id=\"saveButton\">Save Avatar</button>");
 			%>
-		</div>
-		
-		<div class="tabs">
-			<ul class="tabNavigation">
-				<%
+	</div>
+
+	<div class="tabs">
+		<ul class="tabNavigation">
+			<%
 					// Creates tabs for the inventory division.
 					rs = stmt.executeQuery("SELECT name FROM categories");
 					cachedRowSet.populate(rs);
@@ -390,10 +389,10 @@
 					}
 					cachedRowSet.beforeFirst();
 				%>
-			</ul>
-			
-			<br/>
-				<%
+		</ul>
+
+		<br />
+		<%
 					// Creates buttons for each item in the inventory tab.
 					while (cachedRowSet.next()) {					
 						String makeCategoryDiv = "<div id=\"" + cachedRowSet.getString("name") + "\" class=\"boxes\">";
@@ -434,12 +433,14 @@
 						out.print("</div>");
 					}
 					//connection.close();	
-				%>		
-				
-		</div>
-		<button title="Select Pose" class="posesClick" onclick="ShowPoseOptions();" id="posesButton">Hide Pose Options</button>
-		<div class="posesDiv" id="posesList">
-			<%
+				%>
+
+	</div>
+	<button title="Select Pose" class="posesClick"
+		onclick="ShowPoseOptions();" id="posesButton">Hide Pose
+		Options</button>
+	<div class="posesDiv" id="posesList">
+		<%
 				// Creates buttons for all avatar pose options.
 				
 				// dave, just temporarily limiting the poses as an experiment
@@ -452,12 +453,12 @@
 					makeButton = "<button title=\"" + rs.getString("description") + "\" class=\"icon\" onClick=\"clickPose('" + rs.getString("poseID") + "', '" + currentUser + "')\"><img src=\"" + imagesFolderURL + rs.getString("poseImg") + "\" /></button>";
 					out.print(makeButton);
 				}	
-			%>			
-		</div>
-	
-		<div id="ajax_div">
-		</div>
-		<script type="text/javascript">  UpdatingAvatar("<%=currentUser%>"); </script>
-	</body>
-</html>
+			%>
+	</div>
+
+	<div id="ajax_div"></div>
+	<script type="text/javascript">  UpdatingAvatar("<%=currentUser%>");
+	</script>
+</body>
+	</html>
 </bbData:context>
